@@ -60,8 +60,7 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     var wsPrefix = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
     var wsUrl = wsPrefix + ctx.urls.sharejs;
     var socket = new ReconnectingWebSocket(wsUrl);
-    var sharedb = require('sharedb/lib/client');
-    var sjs = new sharedb.Connection(socket);
+    var sjs = new sharejs.Connection(socket);
     var doc = sjs.get('docs', metadata.docId);
     var madeConnection = false;
     var allowRefresh = true;
@@ -191,9 +190,9 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     // This will be called on both connect and reconnect
     doc.on('subscribe', register);
     // This will be called when we have a live copy of the server's data.
-    doc.subscribe(whenReady);
+    doc.whenReady(whenReady);
     // Subscribe to changes
-    // doc.subscribe();
+    doc.subscribe();
 };
 
 module.exports = ShareJSDoc;

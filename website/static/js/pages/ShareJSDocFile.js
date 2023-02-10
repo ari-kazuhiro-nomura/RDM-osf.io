@@ -46,8 +46,7 @@ var ShareJSDoc = function(shareWSUrl, metadata, editor, observables) {
     var wsPrefix = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
     var wsUrl = wsPrefix + shareWSUrl;
     var socket = new ReconnectingWebSocket(wsUrl);
-    var sharedb = require('sharedb/lib/client');
-    var sjs = new sharedb.Connection(socket);
+    var sjs = new sharejs.Connection(socket);
     var doc = sjs.get('docs', metadata.docId);
     var madeConnection = false;
     var allowRefresh = true;
