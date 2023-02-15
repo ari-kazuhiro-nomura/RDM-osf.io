@@ -1,6 +1,7 @@
 var $ = require('jquery');
 
 var WikiEditor = require('./WikiEditor.js');
+var StringBinding = require('sharedb-string-binding');
 var LanguageTools = ace.require('ace/ext/language_tools');
 
 var activeUsers = [];
@@ -60,7 +61,8 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     var wsPrefix = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
     var wsUrl = wsPrefix + ctx.urls.sharejs;
     var socket = new ReconnectingWebSocket(wsUrl);
-    var sjs = new sharejs.Connection(socket);
+    var sharedb = require('sharedb/lib/client');
+    var sjs = new sharedb.Connection(socket);
     var doc = sjs.get('docs', metadata.docId);
     var madeConnection = false;
     var allowRefresh = true;
@@ -192,7 +194,11 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     // This will be called when we have a live copy of the server's data.
     doc.whenReady(whenReady);
     // Subscribe to changes
-    doc.subscribe();
+    doc.subscribe(function(err) {
+        if (err) throw err;
+        var binding = new StringBinding(self.editor, doc, ['content']);
+        binding.setup();
+    });
 };
 
 module.exports = ShareJSDoc;
