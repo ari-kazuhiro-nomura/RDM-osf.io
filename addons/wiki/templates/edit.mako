@@ -408,8 +408,6 @@ ${parent.javascript_bottom()}
     });
 
 </script>
-<script src="//${sharejs_url}/text.js"></script>
-<script src="//${sharejs_url}/share.js"></script>
 <link href="${node['mfr_url']}/static/css/mfr.css" media="all" rel="stylesheet" />
 <script src="${node['mfr_url']}/static/js/mfr.js"></script>
 <script src=${"/static/public/js/wiki-edit-page.js" | webpack_asset}></script>

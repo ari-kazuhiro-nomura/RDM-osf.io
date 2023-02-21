@@ -5,7 +5,7 @@ var StringBinding = require('sharedb-string-binding');
 var LanguageTools = ace.require('ace/ext/language_tools');
 
 var activeUsers = [];
-var collaborative = (typeof WebSocket !== 'undefined' && typeof sharejs !== 'undefined');
+var collaborative = (typeof WebSocket !== 'undefined');
 
 var ShareJSDoc = function(url, metadata, viewText, editor) {
     var self = this;
@@ -56,7 +56,6 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     // Requirements load order is specific in this case to compensate
     // for older browsers.
     var ReconnectingWebSocket = require('reconnectingWebsocket');
-    require('addons/wiki/static/ace.js');
     // Configure connection
     var wsPrefix = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
     var wsUrl = wsPrefix + ctx.urls.sharejs;
@@ -64,28 +63,11 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     var sharedb = require('sharedb/lib/client');
     var sjs = new sharedb.Connection(socket);
     var doc = sjs.get('docs', metadata.docId);
+    var element = document.querySelector('textarea');
     var madeConnection = false;
     var allowRefresh = true;
     var refreshTriggered = false;
     var canEdit = true;
-
-    function whenReady() {
-        // Create a text document if one does not exist
-        if (!doc.type) {
-            doc.create('text');
-        }
-
-        viewModel.fetchData().done(function(response) {
-            doc.attachAce(self.editor);
-            if (viewModel.wikisDiffer(viewModel.currentText(), response.wiki_draft)) {
-                viewModel.currentText(response.wiki_draft);
-            }
-            unlockEditor();
-            viewModel.status('connected');
-            madeConnection = true;
-        });
-
-    }
 
     function unlockEditor() {
         self.editor.gotoLine(0,0);
@@ -192,11 +174,21 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     // This will be called on both connect and reconnect
     doc.on('subscribe', register);
     // This will be called when we have a live copy of the server's data.
-    doc.whenReady(whenReady);
     // Subscribe to changes
     doc.subscribe(function(err) {
         if (err) throw err;
-        var binding = new StringBinding(self.editor, doc, ['content']);
+
+        viewModel.fetchData().done(function(response) {
+            // doc.attachAce(self.editor);
+            if (viewModel.wikisDiffer(viewModel.currentText(), response.wiki_draft)) {
+                viewModel.currentText(response.wiki_draft);
+            }
+            unlockEditor();
+            viewModel.status('connected');
+            madeConnection = true;
+        });
+
+        var binding = new StringBinding(element, doc, ['content']);
         binding.setup();
     });
 };
