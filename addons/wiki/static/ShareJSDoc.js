@@ -5,7 +5,7 @@ var StringBinding = require('sharedb-string-binding');
 var LanguageTools = ace.require('ace/ext/language_tools');
 
 var activeUsers = [];
-var collaborative = (typeof WebSocket !== 'undefined');
+var collaborative = (typeof WebSocket !== 'undefined' && typeof sharejs !== 'undefined');
 
 var ShareJSDoc = function(url, metadata, viewText, editor) {
     var self = this;
@@ -56,14 +56,16 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     // Requirements load order is specific in this case to compensate
     // for older browsers.
     var ReconnectingWebSocket = require('reconnectingWebsocket');
+    require('addons/wiki/static/ace.js');
     // Configure connection
     var wsPrefix = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
     var wsUrl = wsPrefix + ctx.urls.sharejs;
     var socket = new ReconnectingWebSocket(wsUrl);
     var sharedb = require('sharedb/lib/client');
     var sjs = new sharedb.Connection(socket);
-    var doc = sjs.get('docs', metadata.docId);
+    var doc = sjs.get('docs', 'textarea');
     var element = document.querySelector('textarea');
+    
     var madeConnection = false;
     var allowRefresh = true;
     var refreshTriggered = false;
