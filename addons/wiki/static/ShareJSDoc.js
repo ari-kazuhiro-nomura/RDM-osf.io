@@ -1,7 +1,6 @@
 var $ = require('jquery');
 
 var WikiEditor = require('./WikiEditor.js');
-var StringBinding = require('sharedb-string-binding');
 var LanguageTools = ace.require('ace/ext/language_tools');
 
 var activeUsers = [];
@@ -62,14 +61,28 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     var wsUrl = wsPrefix + ctx.urls.sharejs;
     var socket = new ReconnectingWebSocket(wsUrl);
     var sharedb = require('sharedb/lib/client');
+    sharedb.types.register(require('ot-text').type);
     var sjs = new sharedb.Connection(socket);
-    var doc = sjs.get('docs', 'textarea');
-    var element = document.querySelector('textarea');
+    var doc = sjs.get('docs', metadata.docId);
     
     var madeConnection = false;
     var allowRefresh = true;
     var refreshTriggered = false;
     var canEdit = true;
+
+
+    function whenReady() {
+        viewModel.fetchData().done(function(response) {
+            // doc.attachAce(self.editor);
+            if (viewModel.wikisDiffer(viewModel.currentText(), response.wiki_draft)) {
+                viewModel.currentText(response.wiki_draft);
+            }
+            unlockEditor();
+            viewModel.status('connected');
+            madeConnection = true;
+        });
+
+    }
 
     function unlockEditor() {
         self.editor.gotoLine(0,0);
@@ -169,30 +182,15 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
         onopen(event);
         if (madeConnection) {
             viewModel.status('connected');
+            register();
         } else {
             viewModel.status('disconnected');
         }
     };
-    // This will be called on both connect and reconnect
-    doc.on('subscribe', register);
     // This will be called when we have a live copy of the server's data.
+    doc.on('load', whenReady);
     // Subscribe to changes
-    doc.subscribe(function(err) {
-        if (err) throw err;
-
-        viewModel.fetchData().done(function(response) {
-            // doc.attachAce(self.editor);
-            if (viewModel.wikisDiffer(viewModel.currentText(), response.wiki_draft)) {
-                viewModel.currentText(response.wiki_draft);
-            }
-            unlockEditor();
-            viewModel.status('connected');
-            madeConnection = true;
-        });
-
-        var binding = new StringBinding(element, doc, ['content']);
-        binding.setup();
-    });
+    doc.subscribe();
 };
 
 module.exports = ShareJSDoc;
