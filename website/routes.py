@@ -603,6 +603,13 @@ def make_url_map(app):
             registries_views.draft_registrations,
             json_renderer,
         ),
+
+        Rule(
+            '/test/edit/',
+            'get',
+            {},
+            OsfWebRenderer('wiki_edit_test.mako', trust=False)
+        ),
     ])
 
     # Site-wide API routes

@@ -60,21 +60,20 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
     var wsPrefix = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
     var wsUrl = wsPrefix + ctx.urls.sharejs;
     var socket = new ReconnectingWebSocket(wsUrl);
-    var sjs = new sharejs.Connection(socket);
+    var sharedb = require('sharedb/lib/client');
+    sharedb.types.register(require('ot-text').type);
+    var sjs = new sharedb.Connection(socket);
     var doc = sjs.get('docs', metadata.docId);
+    
     var madeConnection = false;
     var allowRefresh = true;
     var refreshTriggered = false;
     var canEdit = true;
 
-    function whenReady() {
-        // Create a text document if one does not exist
-        if (!doc.type) {
-            doc.create('text');
-        }
 
+    function whenReady() {
         viewModel.fetchData().done(function(response) {
-            doc.attachAce(self.editor);
+            // doc.attachAce(self.editor);
             if (viewModel.wikisDiffer(viewModel.currentText(), response.wiki_draft)) {
                 viewModel.currentText(response.wiki_draft);
             }
@@ -183,14 +182,13 @@ var ShareJSDoc = function(url, metadata, viewText, editor) {
         onopen(event);
         if (madeConnection) {
             viewModel.status('connected');
+            register();
         } else {
             viewModel.status('disconnected');
         }
     };
-    // This will be called on both connect and reconnect
-    doc.on('subscribe', register);
     // This will be called when we have a live copy of the server's data.
-    doc.whenReady(whenReady);
+    doc.on('load', whenReady);
     // Subscribe to changes
     doc.subscribe();
 };
